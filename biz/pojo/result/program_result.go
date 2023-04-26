@@ -6,13 +6,8 @@ type Program struct {
 	Name      string `json:"name"`
 	View      string `json:"view"`
 	ActorList string `json:"actorList"`
-	//Num       int64  `json:"num"`
 }
 
 type ProgramResults struct {
 	ProgramResults []*Program `json:"programResults"`
 }
-
-//func (p ProgramResults) Set(list []*Program) {
-//	p.programResults = list
-//}

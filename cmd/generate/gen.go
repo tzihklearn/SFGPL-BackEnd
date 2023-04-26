@@ -8,6 +8,7 @@ import (
 
 func main() {
 
+	dal.Init()
 	// 构造生成器实例
 	g := gen.NewGenerator(gen.Config{
 		// 相对执行`go run`时的路径, 会自动创建目录
@@ -91,7 +92,7 @@ func main() {
 	//g.ApplyBasic(User)
 	g.ApplyBasic(allModel...)
 
-	g.ApplyInterface(func(querier Querier) {}, Program{})
+	//g.ApplyInterface(func(querier Querier) {}, Program{})
 
 	g.Execute()
 }
