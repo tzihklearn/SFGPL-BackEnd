@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var mysqlDsn = "user:passwd@tcp(ip:port)/sfgpl?charset=utf8mb4&parseTime=True&loc=Local"
+var mysqlDsn = dsn
 
 // DB 通过DB操控数据库
 var DB *gorm.DB

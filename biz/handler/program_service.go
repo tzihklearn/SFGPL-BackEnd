@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -46,12 +45,16 @@ func GetAllProgram(c *gin.Context) {
 		//查询分类，限制where id = programList[i].CategorieID
 		dal.DB.Where("id = ?", programList[i].CategorieID).First(&categorie)
 
+		actor := model.Actor{}
+		//查询作者
+		dal.DB.Where("id = ?", programList[i].ActorID).First(&actor)
+
 		programs = append(programs, &result.Program{
 			Id:        programList[i].ID,
 			TypeName:  categorie.Name,
 			Name:      programList[i].Title,
 			View:      programList[i].View,
-			ActorList: programList[i].Actors,
+			ActorList: actor.Name,
 			//Num:       int64(programList[i].ActorNum),
 		})
 	}
@@ -129,13 +132,17 @@ func Search(c *gin.Context) {
 		//查询分类，限制where id = programList[i].CategorieID
 		dal.DB.Where("id = ?", programList[i].CategorieID).First(&categorie)
 
+		actor := model.Actor{}
+		//查询作者
+		dal.DB.Where("id = ?", programList[i].ActorID).First(&actor)
+
 		//拼装返回数据
 		programs = append(programs, &result.Program{
 			Id:        programList[i].ID,
 			TypeName:  categorie.Name,
 			Name:      programList[i].Title,
 			View:      programList[i].View,
-			ActorList: programList[i].Actors,
+			ActorList: actor.Name,
 		})
 	}
 	if len(programs) == 0 {
@@ -165,19 +172,40 @@ func Add(c *gin.Context) {
 		return
 	}
 
-	//拼装数据库实体类program
-	var program model.Program
-
-	program.Title = addProgram.Name
-	program.View = addProgram.Point
-	program.Actors = addProgram.Actors
-	program.ActorNum = int32(len(strings.Split(addProgram.Actors, "，")))
-	program.CategorieID = int32(addProgram.TypeName)
-	program.UpdeateTine = time.Now()
-	program.CreateTime = time.Now()
-
 	//事务处理
 	err = dal.DB.Transaction(func(tx *gorm.DB) error {
+
+		actor := model.Actor{}
+
+		//查询作者id
+		tx.Where("name = ?", addProgram.Actors).Find(&actor)
+		if len(actor.Name) == 0 {
+			actor.Name = addProgram.Actors
+			actor.UpdateTime = time.Now()
+			actor.CreateTime = time.Now()
+			//插入作者
+			resultDB := tx.Create(&actor)
+			//如果插入数异常，返回
+			if resultDB.RowsAffected != 1 {
+				c.JSON(200, &result.Result{
+					Code:     result.Code_RTErr,
+					Msg:      "新增错误",
+					Response: nil,
+				})
+				return errors.New("插入数异常")
+			}
+		}
+
+		//拼装数据库实体类program
+		var program model.Program
+
+		program.Title = addProgram.Name
+		program.View = addProgram.Point
+		program.ActorID = actor.ID
+		program.CategorieID = int32(addProgram.TypeName)
+		program.UpdeateTine = time.Now()
+		program.CreateTime = time.Now()
+
 		//创建书籍，插入数据
 		resultDB := tx.Create(&program)
 		//如果插入数异常，返回
@@ -277,19 +305,40 @@ func Update(c *gin.Context) {
 		return
 	}
 
-	var program model.Program
-
-	program.ID = int32(addProgram.Id)
-	program.Title = addProgram.Name
-	program.View = addProgram.Point
-	program.Actors = addProgram.Actors
-	program.ActorNum = int32(len(strings.Split(addProgram.Actors, "，")))
-	program.CategorieID = categorie.ID
-	program.UpdeateTine = time.Now()
-	program.CreateTime = time.Now()
-
 	//事务处理
 	err = dal.DB.Transaction(func(tx *gorm.DB) error {
+
+		actor := model.Actor{}
+
+		//查询作者id
+		tx.Where("name = ?", addProgram.Actors).Find(&actor)
+		if len(actor.Name) == 0 {
+			actor.Name = addProgram.Actors
+			actor.UpdateTime = time.Now()
+			actor.CreateTime = time.Now()
+			//插入作者
+			resultDB := tx.Create(&actor)
+			//如果插入数异常，返回
+			if resultDB.RowsAffected != 1 {
+				c.JSON(200, &result.Result{
+					Code:     result.Code_RTErr,
+					Msg:      "新增错误",
+					Response: nil,
+				})
+				return errors.New("插入数异常")
+			}
+		}
+
+		var program model.Program
+
+		program.ID = int32(addProgram.Id)
+		program.Title = addProgram.Name
+		program.View = addProgram.Point
+		program.ActorID = actor.ID
+		program.CategorieID = categorie.ID
+		program.UpdeateTine = time.Now()
+		program.CreateTime = time.Now()
+
 		//更新书籍，以主键id作匹配
 		resultDB := tx.Updates(program)
 
