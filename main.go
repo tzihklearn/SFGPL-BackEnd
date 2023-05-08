@@ -16,8 +16,6 @@ func main() {
 	//配置跨域处理
 	r.Use(cors.Default())
 
-	//注册静态文件给gin管理
-	r.Static("/file", "./static")
 	//配置服务监听端口等信息
 	s := &http.Server{
 		Addr:           "localhost:18080",
